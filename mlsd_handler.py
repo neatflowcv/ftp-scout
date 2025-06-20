@@ -29,10 +29,3 @@ class MLSDStrategy(FTPDirectoryStrategy):
     def get_strategy_name(self) -> str:
         """전략 이름을 반환합니다."""
         return "MLSD"
-
-
-# 하위 호환성을 위한 기존 함수
-def get_directory_contents_mlsd(ftp_conn: RobustFTPConnection) -> Optional[List[Tuple[str, bool]]]:
-    """기존 함수와의 하위 호환성을 위한 래퍼 함수"""
-    strategy = MLSDStrategy()
-    return strategy.get_directory_contents(ftp_conn) 

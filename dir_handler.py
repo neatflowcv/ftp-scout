@@ -56,10 +56,3 @@ class DIRStrategy(FTPDirectoryStrategy):
     def get_strategy_name(self) -> str:
         """전략 이름을 반환합니다."""
         return "DIR"
-
-
-# 하위 호환성을 위한 기존 함수
-def get_directory_contents_dir(ftp_conn: RobustFTPConnection) -> Optional[List[Tuple[str, bool]]]:
-    """기존 함수와의 하위 호환성을 위한 래퍼 함수"""
-    strategy = DIRStrategy()
-    return strategy.get_directory_contents(ftp_conn) 

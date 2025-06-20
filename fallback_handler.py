@@ -39,9 +39,3 @@ class FallbackStrategy(FTPDirectoryStrategy):
         """전략 이름을 반환합니다."""
         return "Fallback"
 
-
-# 하위 호환성을 위한 기존 함수
-def get_directory_contents_fallback(ftp_conn: RobustFTPConnection) -> Optional[List[Tuple[str, bool]]]:
-    """기존 함수와의 하위 호환성을 위한 래퍼 함수"""
-    strategy = FallbackStrategy()
-    return strategy.get_directory_contents(ftp_conn) 
