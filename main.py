@@ -312,7 +312,7 @@ def main() -> None:
     # 비밀번호만 입력으로 받기 (보안상)
     ftp_pass = input(f"{ftp_user}@{ftp_host}의 FTP 비밀번호를 입력하세요: ").strip()
     
-    print(f"\n연결 정보:")
+    print("\n연결 정보:")
     print(f"호스트: {ftp_host}")
     print(f"사용자: {ftp_user}")
     print(f"디렉토리: {ftp_dir}")
