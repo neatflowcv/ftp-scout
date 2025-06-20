@@ -154,17 +154,23 @@ def get_directory_contents_dir(ftp_conn: RobustFTPConnection) -> list[tuple[str,
 
         for line in dir_lines:
             # Unix 스타일 ls -l 출력을 파싱
-            # 첫 번째 문자가 'd'이면 디렉토리
-            if line:
-                # 처음 8개 필드만 분리하고, 나머지는 파일명으로 처리
-                parts = line.split(None, 8)  # 최대 8번만 분리
-                if len(parts) >= 4:  # 최소한 권한, 링크수, 소유자, 파일명이 있어야 함
-                    permissions = parts[0]
-                    is_dir = permissions.startswith("d")
-                    # 파일명은 마지막 부분 (공백, 탭 등이 포함될 수 있음)
-                    filename = parts[-1]  # 마지막 요소를 파일명으로 사용
-                    if filename not in (".", ".."):
-                        contents.append((filename, is_dir))
+            if not line:
+                continue
+                
+            # 처음 8개 필드만 분리하고, 나머지는 파일명으로 처리
+            parts = line.split(None, 8)  # 최대 8번만 분리
+            if len(parts) < 4:  # 최소한 권한, 링크수, 소유자, 파일명이 있어야 함
+                continue
+                
+            permissions = parts[0]
+            is_dir = permissions.startswith("d")
+            # 파일명은 마지막 부분 (공백, 탭 등이 포함될 수 있음)
+            filename = parts[-1]  # 마지막 요소를 파일명으로 사용
+            
+            if filename in (".", ".."):
+                continue
+                
+            contents.append((filename, is_dir))
 
         return contents
     except Exception as e:
