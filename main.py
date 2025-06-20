@@ -154,18 +154,23 @@ def get_directory_contents_dir(ftp_conn: RobustFTPConnection) -> list[tuple[str,
 
         for line in dir_lines:
             # Unix 스타일 ls -l 출력을 파싱
-            if not line:
+            if not line.strip():
                 continue
                 
-            # 처음 8개 필드만 분리하고, 나머지는 파일명으로 처리
+            # 다양한 FTP 서버 형식 지원을 위한 개선된 파싱
             parts = line.split(None, 8)  # 최대 8번만 분리
             if len(parts) < 4:  # 최소한 권한, 링크수, 소유자, 파일명이 있어야 함
                 continue
                 
             permissions = parts[0]
             is_dir = permissions.startswith("d")
-            # 파일명은 마지막 부분 (공백, 탭 등이 포함될 수 있음)
-            filename = parts[-1]  # 마지막 요소를 파일명으로 사용
+            
+            # 파일명 추출 - 마지막 부분에서 링크 표시 제거
+            filename = parts[-1]
+            
+            # 심볼릭 링크 처리 (filename -> target 형식)
+            if " -> " in filename:
+                filename = filename.split(" -> ")[0]
             
             if filename in (".", ".."):
                 continue
