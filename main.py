@@ -4,9 +4,10 @@ import time
 from collections import deque
 from typing import Generator
 
-from dir_handler import get_directory_contents_dir
-from fallback_handler import get_directory_contents_fallback
-from mlsd_handler import get_directory_contents_mlsd
+from dir_handler import DIRStrategy
+from fallback_handler import FallbackStrategy
+from ftp_strategy import FTPDirectoryContext
+from mlsd_handler import MLSDStrategy
 from robust_ftp import RobustFTPConnection
 
 
@@ -28,20 +29,21 @@ def generate_ftp_recursive_listing_optimized(
         # 큐 초기화: (현재 FTP 서버의 경로, 현재까지의 상대 경로)
         dirs_to_visit = deque([(normalized_start_path, "")])
 
-        # 사용할 방식 결정 (한 번만 테스트)
+        # 전략 컨텍스트 설정
+        strategy_context = FTPDirectoryContext()
+        
+        # 우선순위에 따라 전략 추가 (높은 우선순위부터)
+        strategy_context.add_strategy(MLSDStrategy())    # 가장 효율적
+        strategy_context.add_strategy(DIRStrategy())     # 중간 효율성
+        strategy_context.add_strategy(FallbackStrategy()) # 가장 느리지만 호환성 높음
+        
+        # 최적의 전략 자동 선택
         ftp_conn.cwd(normalized_start_path)
-        test_contents = get_directory_contents_mlsd(ftp_conn)
-        if test_contents is None:
-            test_contents = get_directory_contents_dir(ftp_conn)
-            if test_contents is None:
-                use_method = "fallback"
-                print("MLSD와 DIR 모두 실패, 백업 방식 사용")
-            else:
-                use_method = "dir"
-                print("DIR 방식 사용")
-        else:
-            use_method = "mlsd"
-            print("MLSD 방식 사용 (최적화됨)")
+        selected_strategy = strategy_context.auto_select_strategy(ftp_conn)
+        
+        if selected_strategy is None:
+            print("모든 전략이 실패했습니다.")
+            return
 
         processed_count = 0
         while dirs_to_visit:
@@ -58,14 +60,9 @@ def generate_ftp_recursive_listing_optimized(
                 print(f"디렉토리 변경 실패 {current_ftp_dir}: {e}")
                 continue
 
-            # 선택된 방식으로 디렉토리 내용 가져오기
+            # 선택된 전략으로 디렉토리 내용 가져오기
             try:
-                if use_method == "mlsd":
-                    contents = get_directory_contents_mlsd(ftp_conn)
-                elif use_method == "dir":
-                    contents = get_directory_contents_dir(ftp_conn)
-                else:
-                    contents = get_directory_contents_fallback(ftp_conn)
+                contents = strategy_context.execute_strategy(ftp_conn)
             except Exception as e:
                 print(f"디렉토리 내용 가져오기 실패 {current_ftp_dir}: {e}")
                 continue
@@ -127,7 +124,7 @@ def main() -> None:
     print(f"호스트: {ftp_host}")
     print(f"사용자: {ftp_user}")
     print(f"디렉토리: {ftp_dir}")
-    print("=== 최적화된 방식 사용 ===")
+    print("=== 전략 패턴 사용 ===")
 
     # 실행 시간 측정 시작
     start_time = time.time()
